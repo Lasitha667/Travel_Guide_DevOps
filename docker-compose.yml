@@ -1,0 +1,15 @@
+version: "3.9"
+services:
+  frontend:
+    build: ./front   # path to your React frontend folder
+    ports:
+      - "5173:5173"
+    stdin_open: true
+    tty: true
+
+  backend:
+    build: ./Tour # path to your Spring Boot backend folder
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATA_MONGODB_URI=mongodb+srv://englasithacoc:72VWjVFPSBf3YeKG@lasitha.fbzokq9.mongodb.net/Users?retryWrites=true&w=majority
