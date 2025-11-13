@@ -1,11 +1,6 @@
 pipeline {
     agent any
 
-    tools {
-        jdk 'jdk17' // Make sure this matches the JDK configured in Jenkins Global Tools
-        maven 'maven' // Optional if you have Maven configured in Jenkins
-    }
-
     environment {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub')
         DOCKERHUB_USERNAME = 'Lasitha667'
@@ -20,7 +15,7 @@ pipeline {
 
         stage('Build Backend (Spring Boot)') {
             steps {
-                dir('Tour') { // Make sure 'Tour' is the actual backend folder
+                dir('Tour') {
                     sh 'mvn clean package -DskipTests'
                 }
             }
@@ -28,7 +23,7 @@ pipeline {
 
         stage('Build Frontend (React)') {
             steps {
-                dir('front') { // Make sure 'front' is the frontend folder
+                dir('front') {
                     sh 'npm install'
                     sh 'npm run build'
                 }
@@ -72,12 +67,6 @@ pipeline {
             steps {
                 sh 'docker system prune -af'
             }
-        }
-    }
-
-    post {
-        failure {
-            echo "Pipeline failed! Check logs for details."
         }
     }
 }
