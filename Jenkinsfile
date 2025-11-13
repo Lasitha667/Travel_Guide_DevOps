@@ -15,7 +15,7 @@ pipeline {
 
         stage('Build Backend (Spring Boot)') {
             steps {
-                dir('backend') {
+                dir('Tour') {
                     sh 'mvn clean package -DskipTests'
                 }
             }
@@ -23,7 +23,7 @@ pipeline {
 
         stage('Build Frontend (React)') {
             steps {
-                dir('frontend') {
+                dir('front') {
                     sh 'npm install'
                     sh 'npm run build'
                 }
