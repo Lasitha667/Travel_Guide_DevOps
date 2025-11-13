@@ -22,9 +22,9 @@ pipeline {
             steps {
                 dir('Tour') {
                     sh '''
-                    echo "Using Java version:"
-                    java -version
-                    mvn clean package -DskipTests
+                        echo "Using Java version:"
+                        java -version
+                        mvn clean package -DskipTests
                     '''
                 }
             }
@@ -34,8 +34,8 @@ pipeline {
             steps {
                 dir('front') {
                     sh '''
-                    npm install
-                    npm run build
+                        npm install
+                        npm run build
                     '''
                 }
             }
@@ -53,27 +53,33 @@ pipeline {
         stage('Login to Docker Hub') {
             steps {
                 script {
-                    sh "echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin"
+                    // Avoid Groovy string interpolation to keep secret safe
+                    sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
                 }
             }
         }
 
-       stage('Push Docker Images') {
-    steps {
-        script {
-            def frontendImage = "${DOCKERHUB_USERNAME}/tourguidedevops-frontend:latest"
-            def backendImage = "${DOCKERHUB_USERNAME}/tourguidedevops-backend:latest"
+        stage('Push Docker Images') {
+            steps {
+                script {
+                    // Make sure the images exist before pushing
+                    sh 'docker images'
 
-            sh """
-                docker tag tourguidedevops-frontend ${frontendImage}
-                docker tag tourguidedevops-backend ${backendImage}
-                docker push ${frontendImage}
-                docker push ${backendImage}
-            """
+                    def frontendImage = "docker.io/${DOCKERHUB_USERNAME}/tourguidedevops-frontend:latest"
+                    def backendImage = "docker.io/${DOCKERHUB_USERNAME}/tourguidedevops-backend:latest"
+
+                    sh """
+                        # Tag images with Docker Hub repository
+                        docker tag tourguidedevops-frontend ${frontendImage}
+                        docker tag tourguidedevops-backend ${backendImage}
+
+                        # Push images
+                        docker push ${frontendImage}
+                        docker push ${backendImage}
+                    """
+                }
+            }
         }
-    }
-}
-
 
         stage('Clean Up') {
             steps {
