@@ -4,6 +4,8 @@ pipeline {
     environment {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub')
         DOCKERHUB_USERNAME = 'Lasitha667'
+        JAVA_HOME = '/usr/lib/jvm/java-21-openjdk-amd64' // Adjust if different
+        PATH = "${JAVA_HOME}/bin:${env.PATH}"
     }
 
     stages {
@@ -16,7 +18,11 @@ pipeline {
         stage('Build Backend (Spring Boot)') {
             steps {
                 dir('Tour') {
-                    sh 'mvn clean package -DskipTests'
+                    sh '''
+                    echo "Using Java version:"
+                    java -version
+                    mvn clean package -DskipTests
+                    '''
                 }
             }
         }
@@ -24,8 +30,10 @@ pipeline {
         stage('Build Frontend (React)') {
             steps {
                 dir('front') {
-                    sh 'npm install'
-                    sh 'npm run build'
+                    sh '''
+                    npm install
+                    npm run build
+                    '''
                 }
             }
         }
