@@ -1,11 +1,14 @@
 pipeline {
     agent any
 
+    tools {
+        // Use the JDK configured in Jenkins (add JDK 17 in Global Tool Configuration as 'jdk17')
+        jdk 'jdk17'
+    }
+
     environment {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub')
         DOCKERHUB_USERNAME = 'Lasitha667'
-        JAVA_HOME = '/usr/lib/jvm/java-21-openjdk-amd64' // Adjust if different
-        PATH = "${JAVA_HOME}/bin:${env.PATH}"
     }
 
     stages {
