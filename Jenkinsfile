@@ -58,21 +58,22 @@ pipeline {
             }
         }
 
-        stage('Push Docker Images') {
-            steps {
-                script {
-                    def frontendImage = "${DOCKERHUB_USERNAME}/tourguide_frontend:latest"
-                    def backendImage = "${DOCKERHUB_USERNAME}/tourguide_backend:latest"
+       stage('Push Docker Images') {
+    steps {
+        script {
+            def frontendImage = "${DOCKERHUB_USERNAME}/tourguidedevops-frontend:latest"
+            def backendImage = "${DOCKERHUB_USERNAME}/tourguidedevops-backend:latest"
 
-                    sh """
-                        docker tag frontend ${frontendImage}
-                        docker tag backend ${backendImage}
-                        docker push ${frontendImage}
-                        docker push ${backendImage}
-                    """
-                }
-            }
+            sh """
+                docker tag tourguidedevops-frontend ${frontendImage}
+                docker tag tourguidedevops-backend ${backendImage}
+                docker push ${frontendImage}
+                docker push ${backendImage}
+            """
         }
+    }
+}
+
 
         stage('Clean Up') {
             steps {
