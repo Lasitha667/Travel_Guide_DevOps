@@ -2,24 +2,38 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub') 
-        DOCKERHUB_USERNAME = 'Lasitha667' 
-        
-
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub')
+        DOCKERHUB_USERNAME = 'Lasitha667'
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/Lasitha667/Devops2.git'
+                git branch: 'main', url: 'https://github.com/Lasitha667/Travel_Guide_DevOps.git'
             }
         }
 
+        stage('Build Backend (Spring Boot)') {
+            steps {
+                dir('backend') {
+                    sh 'mvn clean package -DskipTests'
+                }
+            }
+        }
 
-        stage('Build Docker Images from Compose') {
+        stage('Build Frontend (React)') {
+            steps {
+                dir('frontend') {
+                    sh 'npm install'
+                    sh 'npm run build'
+                }
+            }
+        }
+
+        stage('Build Docker Images') {
             steps {
                 script {
-                    echo "Building Docker images using docker-compose..."
+                    echo "Building Docker images..."
                     sh 'docker compose build'
                 }
             }
@@ -33,15 +47,17 @@ pipeline {
             }
         }
 
-        stage('Push Images to Docker Hub') {
+        stage('Push Docker Images') {
             steps {
                 script {
-                    def frontendImage = "${DOCKERHUB_USERNAME}/myapp_frontend:latest"
-                    def backendImage = "${DOCKERHUB_USERNAME}/myapp_backend:latest"
+                    def frontendImage = "${DOCKERHUB_USERNAME}/tourguide_frontend:latest"
+                    def backendImage = "${DOCKERHUB_USERNAME}/tourguide_backend:latest"
 
                     sh """
-                    docker push ${frontendImage}
-                    docker push ${backendImage}
+                        docker tag frontend ${frontendImage}
+                        docker tag backend ${backendImage}
+                        docker push ${frontendImage}
+                        docker push ${backendImage}
                     """
                 }
             }
