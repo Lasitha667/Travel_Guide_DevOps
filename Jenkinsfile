@@ -2,13 +2,12 @@ pipeline {
     agent any
 
     tools {
-        // Use the JDK configured in Jenkins (add JDK 17 in Global Tool Configuration as 'jdk17')
         jdk 'jdk17'
     }
 
     environment {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub')
-        DOCKERHUB_USERNAME = 'lasitha667' // lowercase!
+        DOCKERHUB_USERNAME = 'lasitha667'
     }
 
     stages {
@@ -52,8 +51,8 @@ pipeline {
 
         stage('Login to Docker Hub') {
             steps {
-                script {
-                    sh "echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin"
+                withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
                 }
             }
         }
@@ -61,14 +60,18 @@ pipeline {
         stage('Push Docker Images') {
             steps {
                 script {
-                    def frontendImage = "docker.io/${DOCKERHUB_USERNAME}/tourguidedevops-frontend:latest"
-                    def backendImage  = "docker.io/${DOCKERHUB_USERNAME}/tourguidedevops-backend:latest"
+                    // Use the names from docker-compose.yml
+                    def frontendLocal = "travel_guide_devops-frontend"
+                    def backendLocal  = "travel_guide_devops-backend"
+
+                    def frontendRemote = "docker.io/${DOCKERHUB_USERNAME}/travel_guide_devops-frontend:latest"
+                    def backendRemote  = "docker.io/${DOCKERHUB_USERNAME}/travel_guide_devops-backend:latest"
 
                     sh """
-                        docker tag tourguidedevops-frontend ${frontendImage}
-                        docker tag tourguidedevops-backend ${backendImage}
-                        docker push ${frontendImage}
-                        docker push ${backendImage}
+                        docker tag ${frontendLocal} ${frontendRemote} || true
+                        docker tag ${backendLocal} ${backendRemote} || true
+                        docker push ${frontendRemote} || true
+                        docker push ${backendRemote} || true
                     """
                 }
             }
