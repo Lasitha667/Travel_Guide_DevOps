@@ -77,6 +77,45 @@ pipeline {
             }
         }
 
+        stage('Terraform Init') {
+            environment {
+                AWS_CREDS = credentials('AWSLasitha667')
+                AWS_ACCESS_KEY_ID = "${AWS_CREDS_USR}"
+                AWS_SECRET_ACCESS_KEY = "${AWS_CREDS_PSW}"
+            }
+            steps {
+                dir('terraform') {
+                    sh 'terraform init'
+                }
+            }
+        }
+
+        stage('Terraform Plan') {
+            environment {
+                AWS_CREDS = credentials('AWSLasitha667')
+                AWS_ACCESS_KEY_ID = "${AWS_CREDS_USR}"
+                AWS_SECRET_ACCESS_KEY = "${AWS_CREDS_PSW}"
+            }
+            steps {
+                dir('terraform') {
+                    sh 'terraform plan'
+                }
+            }
+        }
+
+        stage('Terraform Apply') {
+            environment {
+                AWS_CREDS = credentials('AWSLasitha667')
+                AWS_ACCESS_KEY_ID = "${AWS_CREDS_USR}"
+                AWS_SECRET_ACCESS_KEY = "${AWS_CREDS_PSW}"
+            }
+            steps {
+                dir('terraform') {
+                    sh 'terraform apply -auto-approve'
+                }
+            }
+        }
+
         stage('Clean Up') {
             steps {
                 sh 'docker system prune -af'
