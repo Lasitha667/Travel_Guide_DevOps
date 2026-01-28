@@ -77,6 +77,21 @@ pipeline {
             }
         }
 
+        stage('Clean Conflicting Resources') {
+            environment {
+                AWS_CREDS = credentials('AWSLasitha667')
+                AWS_ACCESS_KEY_ID = "${AWS_CREDS_USR}"
+                AWS_SECRET_ACCESS_KEY = "${AWS_CREDS_PSW}"
+                AWS_REGION = "us-east-1" 
+            }
+            steps {
+                dir('terraform') {
+                    sh 'chmod +x cleanup.sh'
+                    sh './cleanup.sh'
+                }
+            }
+        }
+
         stage('Terraform Init') {
             environment {
                 AWS_CREDS = credentials('AWSLasitha667')
