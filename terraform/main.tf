@@ -112,6 +112,30 @@ resource "aws_instance" "tourGuide_server" {
               # Optional: Alias 'docker compose' to 'docker-compose' for convenience
               echo 'alias "docker compose"="docker-compose"' >> /home/ec2-user/.bashrc
 
+              # 6. Create docker-compose.yml for Production
+              cat <<YAML > /home/ec2-user/docker-compose.yml
+              version: "3.9"
+              services:
+                frontend:
+                  image: lasitha667/travel_guide_devops-frontend:latest
+                  ports:
+                    - "5173:5173"
+                  stdin_open: true
+                  tty: true
+              
+                backend:
+                  image: lasitha667/travel_guide_devops-backend:latest
+                  ports:
+                    - "8000:8000"
+                  environment:
+                    - SPRING_DATA_MONGODB_URI=mongodb+srv://englasithacoc:72VWjVFPSBf3YeKG@lasitha.fbzokq9.mongodb.net/Users?retryWrites=true&w=majority
+              YAML
+
+              # 7. Start the Application
+              # Navigate to home directory and run compose
+              cd /home/ec2-user
+              /usr/local/bin/docker-compose up -d
+
               # Signal completion
               touch /var/lib/cloud/instance/docker-ready
               EOF
