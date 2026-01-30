@@ -16,8 +16,6 @@ pipeline {
         AWS_REGION = "us-east-1"
 
         JAVA_HOME = "/usr/lib/jvm/java-21-amazon-corretto.x86_64"
-
-        // 🔥 FIX: Preserve system PATH + ensure terraform path exists
         PATH = "/usr/local/bin:/usr/bin:/bin:${JAVA_HOME}/bin:${env.PATH}"
     }
 
@@ -106,6 +104,18 @@ pipeline {
 
                     sh """
                     ssh -i terraform/tourGuide-app-key.pem -o StrictHostKeyChecking=no ec2-user@${ip} '
+                        # --- WAIT LOOP START ---
+                        echo "Waiting for EC2 User Data script to finish installing Docker..."
+                        
+                        # Loop until file exists
+                        while [ ! -f /var/lib/cloud/instance/docker-ready ]; do
+                            echo "Docker not ready yet... sleeping 10s"
+                            sleep 10
+                        done
+                        
+                        echo "Docker is ready!"
+                        # --- WAIT LOOP END ---
+
                         sudo docker login -u ${DOCKERHUB_CREDS_USR} -p ${DOCKERHUB_CREDS_PSW}
 
                         sudo docker pull ${DOCKERHUB_USERNAME}/travel_guide_devops-backend:latest
