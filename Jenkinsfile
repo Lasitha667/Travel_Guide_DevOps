@@ -1,14 +1,12 @@
 pipeline {
     agent any
 
-    tools {
-        jdk 'jdk17'
-    }
+    // REMOVED "tools" block because Java 17 is already in the container
 
     environment {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub')
         DOCKERHUB_USERNAME = 'lasitha667'
-        JAVA_HOME = "/usr/lib/jvm/java-17-amazon-corretto.x86_64"
+        JAVA_HOME = "/usr/lib/jvm/java-21-amazon-corretto.x86_64"
         PATH = "${JAVA_HOME}/bin:${PATH}"
     }
 
@@ -88,6 +86,7 @@ pipeline {
             }
             steps {
                 dir('terraform') {
+                    // Make sure cleanup.sh actually exists in your repo!
                     sh 'chmod +x cleanup.sh'
                     sh './cleanup.sh'
                 }
