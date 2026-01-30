@@ -16,7 +16,9 @@ pipeline {
         AWS_REGION = "us-east-1"
 
         JAVA_HOME = "/usr/lib/jvm/java-21-amazon-corretto.x86_64"
-        PATH = "${JAVA_HOME}/bin:${PATH}"
+
+        // 🔥 FIX: Preserve system PATH + ensure terraform path exists
+        PATH = "/usr/local/bin:/usr/bin:/bin:${JAVA_HOME}/bin:${env.PATH}"
     }
 
     stages {
@@ -47,34 +49,32 @@ pipeline {
 
         stage('Docker Build') {
             steps {
-                // Ensure 'docker-compose' is installed on the server
                 sh 'docker-compose build'
             }
         }
 
         stage('Docker Login') {
             steps {
-                sh 'echo $DOCKERHUB_CREDS_PSW | docker login -u $DOCKERHUB_CREDS_USR --password-stdin'
+                sh '''
+                  echo "$DOCKERHUB_CREDS_PSW" | \
+                  docker login -u "$DOCKERHUB_CREDS_USR" --password-stdin
+                '''
             }
         }
 
         stage('Push Images') {
             steps {
                 script {
-                    // FIX: Match the image names Docker Compose actually created (lowercase, no underscores)
                     def localFrontend = "tourguidedevops-frontend"
                     def localBackend  = "tourguidedevops-backend"
 
-                    // This is the name you want on Docker Hub
                     def remoteFrontend = "${DOCKERHUB_USERNAME}/travel_guide_devops-frontend:latest"
                     def remoteBackend  = "${DOCKERHUB_USERNAME}/travel_guide_devops-backend:latest"
 
                     sh """
-                        echo "Tagging images..."
                         docker tag ${localFrontend} ${remoteFrontend}
                         docker tag ${localBackend}  ${remoteBackend}
 
-                        echo "Pushing images..."
                         docker push ${remoteFrontend}
                         docker push ${remoteBackend}
                     """
@@ -86,10 +86,7 @@ pipeline {
             steps {
                 dir('terraform') {
                     sh '''
-                      # Only delete the temporary .terraform folder
-                      # Never delete terraform.tfstate!
-                      rm -rf .terraform
-                      
+                      terraform -version
                       terraform init
                       terraform apply -auto-approve
                     '''
@@ -100,14 +97,15 @@ pipeline {
         stage('Deploy to EC2') {
             steps {
                 script {
-                    def ip = sh(script: "terraform -chdir=terraform output -raw instance_public_ip", returnStdout: true).trim()
-                    
-                    // Set permissions for the key before using it
+                    def ip = sh(
+                        script: "terraform -chdir=terraform output -raw instance_public_ip",
+                        returnStdout: true
+                    ).trim()
+
                     sh 'chmod 400 terraform/tourGuide-app-key.pem'
 
                     sh """
                     ssh -i terraform/tourGuide-app-key.pem -o StrictHostKeyChecking=no ec2-user@${ip} '
-                        # Use sudo for docker commands on the EC2 instance
                         sudo docker login -u ${DOCKERHUB_CREDS_USR} -p ${DOCKERHUB_CREDS_PSW}
 
                         sudo docker pull ${DOCKERHUB_USERNAME}/travel_guide_devops-backend:latest
@@ -115,11 +113,11 @@ pipeline {
 
                         sudo docker rm -f tour-backend tour-frontend || true
 
-                        sudo docker run -d --name tour-backend -p 8000:8000 \
+                        sudo docker run -d --restart unless-stopped --name tour-backend -p 8000:8000 \
                           -e SPRING_DATA_MONGODB_URI="mongodb+srv://englasithacoc:72VWjVFPSBf3YeKG@lasitha.fbzokq9.mongodb.net/Users?retryWrites=true&w=majority" \
                           ${DOCKERHUB_USERNAME}/travel_guide_devops-backend:latest
 
-                        sudo docker run -d --name tour-frontend -p 5173:5173 \
+                        sudo docker run -d --restart unless-stopped --name tour-frontend -p 5173:5173 \
                           ${DOCKERHUB_USERNAME}/travel_guide_devops-frontend:latest
                     '
                     """
