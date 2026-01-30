@@ -47,7 +47,6 @@ pipeline {
 
         stage('Docker Build') {
             steps {
-                // FIX: Removed 'sudo' (Jenkins user usually cannot run sudo)
                 // Ensure 'docker-compose' is installed on the server
                 sh 'docker-compose build'
             }
@@ -61,13 +60,25 @@ pipeline {
 
         stage('Push Images') {
             steps {
-                sh """
-                    docker tag travel_guide_devops-frontend ${DOCKERHUB_USERNAME}/travel_guide_devops-frontend:latest
-                    docker tag travel_guide_devops-backend  ${DOCKERHUB_USERNAME}/travel_guide_devops-backend:latest
+                script {
+                    // FIX: Match the image names Docker Compose actually created (lowercase, no underscores)
+                    def localFrontend = "tourguidedevops-frontend"
+                    def localBackend  = "tourguidedevops-backend"
 
-                    docker push ${DOCKERHUB_USERNAME}/travel_guide_devops-frontend:latest
-                    docker push ${DOCKERHUB_USERNAME}/travel_guide_devops-backend:latest
-                """
+                    // This is the name you want on Docker Hub
+                    def remoteFrontend = "${DOCKERHUB_USERNAME}/travel_guide_devops-frontend:latest"
+                    def remoteBackend  = "${DOCKERHUB_USERNAME}/travel_guide_devops-backend:latest"
+
+                    sh """
+                        echo "Tagging images..."
+                        docker tag ${localFrontend} ${remoteFrontend}
+                        docker tag ${localBackend}  ${remoteBackend}
+
+                        echo "Pushing images..."
+                        docker push ${remoteFrontend}
+                        docker push ${remoteBackend}
+                    """
+                }
             }
         }
 
@@ -75,8 +86,8 @@ pipeline {
             steps {
                 dir('terraform') {
                     sh '''
-                      # FIX: Do NOT delete terraform.tfstate! 
                       # Only delete the temporary .terraform folder
+                      # Never delete terraform.tfstate!
                       rm -rf .terraform
                       
                       terraform init
@@ -91,12 +102,12 @@ pipeline {
                 script {
                     def ip = sh(script: "terraform -chdir=terraform output -raw instance_public_ip", returnStdout: true).trim()
                     
-                    // FIX: Set permissions for the key before using it
+                    // Set permissions for the key before using it
                     sh 'chmod 400 terraform/tourGuide-app-key.pem'
 
                     sh """
                     ssh -i terraform/tourGuide-app-key.pem -o StrictHostKeyChecking=no ec2-user@${ip} '
-                        # FIX: Use sudo for docker commands on the EC2 instance
+                        # Use sudo for docker commands on the EC2 instance
                         sudo docker login -u ${DOCKERHUB_CREDS_USR} -p ${DOCKERHUB_CREDS_PSW}
 
                         sudo docker pull ${DOCKERHUB_USERNAME}/travel_guide_devops-backend:latest
