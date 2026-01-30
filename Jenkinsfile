@@ -16,6 +16,7 @@ pipeline {
         AWS_REGION = "us-east-1"
 
         JAVA_HOME = "/usr/lib/jvm/java-21-amazon-corretto.x86_64"
+        // Ensure /usr/local/bin is in PATH for Terraform
         PATH = "/usr/local/bin:/usr/bin:/bin:${JAVA_HOME}/bin:${env.PATH}"
     }
 
@@ -63,6 +64,7 @@ pipeline {
         stage('Push Images') {
             steps {
                 script {
+                    // Docker Compose creates these names (lowercase, no underscores)
                     def localFrontend = "tourguidedevops-frontend"
                     def localBackend  = "tourguidedevops-backend"
 
@@ -85,6 +87,9 @@ pipeline {
                 dir('terraform') {
                     sh '''
                       terraform -version
+                      # Only delete .terraform cache, never the state file!
+                      rm -rf .terraform
+                      
                       terraform init
                       terraform apply -auto-approve
                     '''
@@ -104,29 +109,37 @@ pipeline {
 
                     sh """
                     ssh -i terraform/tourGuide-app-key.pem -o StrictHostKeyChecking=no ec2-user@${ip} '
-                        # --- WAIT LOOP START ---
-                        echo "Waiting for EC2 User Data script to finish installing Docker..."
-                        
-                        # Loop until file exists
+                        # --- 1. WAIT FOR DOCKER INSTALLATION ---
+                        echo "Checking if Docker is ready..."
                         while [ ! -f /var/lib/cloud/instance/docker-ready ]; do
-                            echo "Docker not ready yet... sleeping 10s"
+                            echo "Docker not installed yet... waiting 10s..."
                             sleep 10
                         done
-                        
                         echo "Docker is ready!"
-                        # --- WAIT LOOP END ---
 
+                        # --- 2. LOGIN TO DOCKER HUB ---
                         sudo docker login -u ${DOCKERHUB_CREDS_USR} -p ${DOCKERHUB_CREDS_PSW}
 
+                        # --- 3. PULL LATEST IMAGES ---
                         sudo docker pull ${DOCKERHUB_USERNAME}/travel_guide_devops-backend:latest
                         sudo docker pull ${DOCKERHUB_USERNAME}/travel_guide_devops-frontend:latest
 
+                        # --- 4. AGGRESSIVE CLEANUP (Fix "Port Allocated" Error) ---
+                        echo "Stopping any containers using Port 8000 (Backend)..."
+                        sudo docker ps -q --filter "publish=8000" | xargs -r sudo docker rm -f
+                        
+                        echo "Stopping any containers using Port 5173 (Frontend)..."
+                        sudo docker ps -q --filter "publish=5173" | xargs -r sudo docker rm -f
+                        
+                        # Cleanup by name as backup
                         sudo docker rm -f tour-backend tour-frontend || true
 
+                        # --- 5. START BACKEND ---
                         sudo docker run -d --restart unless-stopped --name tour-backend -p 8000:8000 \
                           -e SPRING_DATA_MONGODB_URI="mongodb+srv://englasithacoc:72VWjVFPSBf3YeKG@lasitha.fbzokq9.mongodb.net/Users?retryWrites=true&w=majority" \
                           ${DOCKERHUB_USERNAME}/travel_guide_devops-backend:latest
 
+                        # --- 6. START FRONTEND ---
                         sudo docker run -d --restart unless-stopped --name tour-frontend -p 5173:5173 \
                           ${DOCKERHUB_USERNAME}/travel_guide_devops-frontend:latest
                     '
