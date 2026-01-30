@@ -2,32 +2,32 @@ pipeline {
     agent any
 
     tools {
-        maven 'maven3' 
+        maven 'maven3'
         nodejs 'node20'
     }
 
     environment {
-        // Credentials IDs
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub')
-        AWS_CREDS             = credentials('AWSLasitha667')
+        DOCKERHUB_CREDS = credentials('dockerhub')
+        AWS_CREDS       = credentials('AWSLasitha667')
 
-        // Environment Variables
-        DOCKERHUB_USERNAME    = 'lasitha667'
+        DOCKERHUB_USERNAME = 'lasitha667'
         AWS_ACCESS_KEY_ID     = "${AWS_CREDS_USR}"
         AWS_SECRET_ACCESS_KEY = "${AWS_CREDS_PSW}"
-        AWS_REGION            = "us-east-1"
-        JAVA_HOME             = "/usr/lib/jvm/java-21-amazon-corretto.x86_64"
-        PATH                  = "${JAVA_HOME}/bin:${PATH}"
+        AWS_REGION = "us-east-1"
+
+        JAVA_HOME = "/usr/lib/jvm/java-21-amazon-corretto.x86_64"
+        PATH = "${JAVA_HOME}/bin:${PATH}"
     }
 
     stages {
+
         stage('Checkout') {
             steps {
                 git branch: 'main', url: 'https://github.com/Lasitha667/Travel_Guide_DevOps.git'
             }
         }
 
-        stage('Build Backend (Spring Boot)') {
+        stage('Build Backend') {
             steps {
                 dir('Tour') {
                     sh 'chmod +x mvnw'
@@ -36,7 +36,7 @@ pipeline {
             }
         }
 
-        stage('Build Frontend (React)') {
+        stage('Build Frontend') {
             steps {
                 dir('front') {
                     sh 'npm install'
@@ -45,60 +45,38 @@ pipeline {
             }
         }
 
-        stage('Build Docker Images') {
+        stage('Docker Build') {
             steps {
-                script {
-                    echo "Building Docker images using docker-compose..."
-                    sh 'docker compose build'
-                }
+                sh 'docker compose build'
             }
         }
 
-        stage('Login to Docker Hub') {
+        stage('Docker Login') {
             steps {
-                script {
-                    sh "echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin"
-                }
+                sh 'echo $DOCKERHUB_CREDS_PSW | docker login -u $DOCKERHUB_CREDS_USR --password-stdin'
             }
         }
 
-        stage('Push Images to Docker Hub') {
+        stage('Push Images') {
             steps {
-                script {
-                    // Start of script block
-                    def frontendImageLocal  = "travel_guide_devops-frontend"
-                    def backendImageLocal   = "travel_guide_devops-backend"
-                    
-                    def frontendImageRemote = "${DOCKERHUB_USERNAME}/travel_guide_devops-frontend:latest"
-                    def backendImageRemote  = "${DOCKERHUB_USERNAME}/travel_guide_devops-backend:latest"
+                sh """
+                    docker tag travel_guide_devops-frontend ${DOCKERHUB_USERNAME}/travel_guide_devops-frontend:latest
+                    docker tag travel_guide_devops-backend  ${DOCKERHUB_USERNAME}/travel_guide_devops-backend:latest
 
-                    // Tag and Push
-                    sh """
-                        docker tag ${frontendImageLocal} ${frontendImageRemote}
-                        docker tag ${backendImageLocal} ${backendImageRemote}
-                        docker push ${frontendImageRemote}
-                        docker push ${backendImageRemote}
-                    """
-                }
+                    docker push ${DOCKERHUB_USERNAME}/travel_guide_devops-frontend:latest
+                    docker push ${DOCKERHUB_USERNAME}/travel_guide_devops-backend:latest
+                """
             }
         }
 
-        stage('Terraform Init & Plan') {
+        stage('Terraform Init & Apply') {
             steps {
                 dir('terraform') {
-                    // Clean previous state to avoid conflicts if needed, though usually safe to keep
-                    sh 'rm -rf .terraform .terraform.lock.hcl terraform.tfstate terraform.tfstate.backup *.pem'
-                    
-                    sh 'terraform init -reconfigure -input=false'
-                    sh 'terraform plan -out=tfplan'
-                }
-            }
-        }
-
-        stage('Terraform Apply') {
-            steps {
-                dir('terraform') {
-                    sh 'terraform apply -auto-approve tfplan'
+                    sh '''
+                      rm -rf .terraform terraform.tfstate*
+                      terraform init
+                      terraform apply -auto-approve
+                    '''
                 }
             }
         }
@@ -106,60 +84,30 @@ pipeline {
         stage('Deploy to EC2') {
             steps {
                 script {
-                    def instanceUsername = 'ec2-user'
-                    def keyName = 'tourGuide-app-key.pem'
-                    
-                    dir('terraform') {
-                        // Get the public IP from Terraform outputs
-                        def ipProxy = sh(script: "terraform output -raw instance_public_ip", returnStdout: true).trim()
-                        
-                        // Ensure key permissions are correct for SSH
-                        sh "chmod 400 ${keyName}"
+                    def ip = sh(script: "terraform -chdir=terraform output -raw instance_public_ip", returnStdout: true).trim()
 
-                        // SSH and Deploy
-                        sh """
-                            ssh -i ${keyName} -o StrictHostKeyChecking=no ${instanceUsername}@${ipProxy} '
-                                # Wait for Docker to be ready (user_data might still be running)
-                                echo "Waiting for Docker setup to finish..."
-                                until [ -f /var/lib/cloud/instance/docker-ready ]; do
-                                    sleep 5
-                                    echo "Still waiting for Docker..."
-                                done
-                                echo "Docker setup complete."
-                                sudo systemctl status docker --no-pager
+                    sh """
+                    ssh -i terraform/tourGuide-app-key.pem -o StrictHostKeyChecking=no ec2-user@${ip} '
+                        docker login -u ${DOCKERHUB_CREDS_USR} -p ${DOCKERHUB_CREDS_PSW}
 
-                                # Login to Docker Hub on the EC2 instance
-                                echo "$DOCKERHUB_CREDENTIALS_PSW" | sudo docker login \
-                                    -u "$DOCKERHUB_CREDENTIALS_USR" --password-stdin
+                        docker pull ${DOCKERHUB_USERNAME}/travel_guide_devops-backend:latest
+                        docker pull ${DOCKERHUB_USERNAME}/travel_guide_devops-frontend:latest
 
-                                # Pull latest images
-                                sudo docker pull ${DOCKERHUB_USERNAME}/travel_guide_devops-backend:latest
-                                sudo docker pull ${DOCKERHUB_USERNAME}/travel_guide_devops-frontend:latest
+                        docker rm -f tour-backend tour-frontend || true
 
-                                # Stop & remove old containers if they exist
-                                sudo docker rm -f tour-backend || true
-                                sudo docker rm -f tour-frontend || true
+                        docker run -d --name tour-backend -p 8000:8000 \
+                          -e SPRING_DATA_MONGODB_URI="mongodb+srv://englasithacoc:72VWjVFPSBf3YeKG@lasitha.fbzokq9.mongodb.net/Users?retryWrites=true&w=majority" \
+                          ${DOCKERHUB_USERNAME}/travel_guide_devops-backend:latest
 
-                                # Run Backend (Port 8000)
-                                sudo docker run -d \
-                                    --name tour-backend \
-                                    -p 8000:8000 \
-                                    -e SPRING_DATA_MONGODB_URI="mongodb+srv://englasithacoc:72VWjVFPSBf3YeKG@lasitha.fbzokq9.mongodb.net/Users?retryWrites=true&w=majority" \
-                                    ${DOCKERHUB_USERNAME}/travel_guide_devops-backend:latest
-
-                                # Run Frontend (Port 5173)
-                                sudo docker run -d \
-                                    --name tour-frontend \
-                                    -p 5173:5173 \
-                                    ${DOCKERHUB_USERNAME}/travel_guide_devops-frontend:latest
-                            '
-                        """
-                    }
+                        docker run -d --name tour-frontend -p 5173:5173 \
+                          ${DOCKERHUB_USERNAME}/travel_guide_devops-frontend:latest
+                    '
+                    """
                 }
             }
         }
 
-        stage('Clean Up') {
+        stage('Cleanup Jenkins') {
             steps {
                 sh 'docker system prune -af'
             }

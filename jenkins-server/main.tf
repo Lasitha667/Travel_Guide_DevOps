@@ -4,14 +4,20 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
+    tls = {
+      source = "hashicorp/tls"
+    }
+    local = {
+      source = "hashicorp/local"
+    }
   }
 }
 
 provider "aws" {
-  region = "us-east-1" 
+  region = "us-east-1"
 }
 
-# --- 1. Unique SSH Key for Jenkins ---
+# --- 1. SSH Key for Jenkins ---
 resource "tls_private_key" "jenkins_pk" {
   algorithm = "RSA"
   rsa_bits  = 4096
@@ -28,10 +34,10 @@ resource "local_file" "jenkins_private_key" {
   file_permission = "0400"
 }
 
-# --- 2. Security Group (Ports 22 & 8080) ---
+# --- 2. Security Group ---
 resource "aws_security_group" "jenkins_sg" {
   name        = "jenkins-standalone-sg"
-  description = "Allow SSH and Jenkins Traffic"
+  description = "Allow SSH + Jenkins"
 
   ingress {
     description = "SSH"
@@ -42,7 +48,7 @@ resource "aws_security_group" "jenkins_sg" {
   }
 
   ingress {
-    description = "Jenkins Web UI"
+    description = "Jenkins UI"
     from_port   = 8080
     to_port     = 8080
     protocol    = "tcp"
@@ -57,58 +63,64 @@ resource "aws_security_group" "jenkins_sg" {
   }
 }
 
-# --- 3. Get Linux AMI ---
+# --- 3. Amazon Linux 2023 ---
 data "aws_ami" "amazon_linux_2023" {
   most_recent = true
   owners      = ["amazon"]
+
   filter {
     name   = "name"
     values = ["al2023-ami-2023.*-x86_64"]
   }
 }
 
-# --- 4. The Jenkins Server ---
+# --- 4. Jenkins EC2 ---
 resource "aws_instance" "jenkins_server" {
   ami           = data.aws_ami.amazon_linux_2023.id
-  instance_type = "t3.small" 
+  instance_type = "t3.small"
   key_name      = aws_key_pair.jenkins_key.key_name
+
   vpc_security_group_ids = [aws_security_group.jenkins_sg.id]
 
   user_data = <<-EOF
               #!/bin/bash
               set -e
-              
-              # 1. Install Java 21
-              yum update -y
-              yum install java-21-amazon-corretto -y
 
-              # 2. Install Jenkins
+              yum update -y
+
+              # Install Java 21
+              yum install -y java-21-amazon-corretto
+
+              # Install Jenkins
               wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo
               rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
-              yum install jenkins -y
+              yum install -y jenkins
               systemctl enable jenkins
               systemctl start jenkins
 
-              # 3. Install Docker & Git
-              yum install git -y
-              amazon-linux-extras install docker -y
+              # Install Git + Docker (FIXED)
+              yum install -y git docker
               systemctl enable docker
               systemctl start docker
-              usermod -a -G docker jenkins
+              usermod -aG docker jenkins
 
-              # 4. Install Docker Compose
-              curl -L "https://github.com/docker/compose/releases/download/v2.20.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+              # Restart Jenkins to apply docker group
+              systemctl restart jenkins
+
+              # Install Docker Compose v2
+              curl -L "https://github.com/docker/compose/releases/download/v2.20.2/docker-compose-$(uname -s)-$(uname -m)" \
+                -o /usr/local/bin/docker-compose
               chmod +x /usr/local/bin/docker-compose
               ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
-
               EOF
 
-  tags = {
-    Name = "Jenkins-Master-Node"
-  }
   root_block_device {
     volume_size = 20
     volume_type = "gp3"
+  }
+
+  tags = {
+    Name = "Jenkins-Master-Node"
   }
 }
 
