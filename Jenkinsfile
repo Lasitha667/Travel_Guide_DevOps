@@ -8,7 +8,7 @@ pipeline {
     environment {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub')
         DOCKERHUB_USERNAME = 'lasitha667'
-        JAVA_HOME = "/usr/lib/jvm/java-21-amazon-corretto.x86_64"
+        JAVA_HOME = "/usr/lib/jvm/java-17-amazon-corretto.x86_64"
         PATH = "${JAVA_HOME}/bin:${PATH}"
     }
 
