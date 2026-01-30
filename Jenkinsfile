@@ -47,7 +47,9 @@ pipeline {
 
         stage('Docker Build') {
             steps {
-                sh 'sudo docker-compose build'
+                // FIX: Removed 'sudo' (Jenkins user usually cannot run sudo)
+                // Ensure 'docker-compose' is installed on the server
+                sh 'docker-compose build'
             }
         }
 
@@ -73,7 +75,10 @@ pipeline {
             steps {
                 dir('terraform') {
                     sh '''
-                      rm -rf .terraform terraform.tfstate*
+                      # FIX: Do NOT delete terraform.tfstate! 
+                      # Only delete the temporary .terraform folder
+                      rm -rf .terraform
+                      
                       terraform init
                       terraform apply -auto-approve
                     '''
@@ -85,21 +90,25 @@ pipeline {
             steps {
                 script {
                     def ip = sh(script: "terraform -chdir=terraform output -raw instance_public_ip", returnStdout: true).trim()
+                    
+                    // FIX: Set permissions for the key before using it
+                    sh 'chmod 400 terraform/tourGuide-app-key.pem'
 
                     sh """
                     ssh -i terraform/tourGuide-app-key.pem -o StrictHostKeyChecking=no ec2-user@${ip} '
-                        docker login -u ${DOCKERHUB_CREDS_USR} -p ${DOCKERHUB_CREDS_PSW}
+                        # FIX: Use sudo for docker commands on the EC2 instance
+                        sudo docker login -u ${DOCKERHUB_CREDS_USR} -p ${DOCKERHUB_CREDS_PSW}
 
-                        docker pull ${DOCKERHUB_USERNAME}/travel_guide_devops-backend:latest
-                        docker pull ${DOCKERHUB_USERNAME}/travel_guide_devops-frontend:latest
+                        sudo docker pull ${DOCKERHUB_USERNAME}/travel_guide_devops-backend:latest
+                        sudo docker pull ${DOCKERHUB_USERNAME}/travel_guide_devops-frontend:latest
 
-                        docker rm -f tour-backend tour-frontend || true
+                        sudo docker rm -f tour-backend tour-frontend || true
 
-                        docker run -d --name tour-backend -p 8000:8000 \
+                        sudo docker run -d --name tour-backend -p 8000:8000 \
                           -e SPRING_DATA_MONGODB_URI="mongodb+srv://englasithacoc:72VWjVFPSBf3YeKG@lasitha.fbzokq9.mongodb.net/Users?retryWrites=true&w=majority" \
                           ${DOCKERHUB_USERNAME}/travel_guide_devops-backend:latest
 
-                        docker run -d --name tour-frontend -p 5173:5173 \
+                        sudo docker run -d --name tour-frontend -p 5173:5173 \
                           ${DOCKERHUB_USERNAME}/travel_guide_devops-frontend:latest
                     '
                     """
