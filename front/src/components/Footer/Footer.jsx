@@ -10,7 +10,7 @@ const Footer = () => {
                     {/* Column 1: Brand & Social */}
                     <div className="footer-section brand-section">
                         <div className="brand-logo">
-                            <h3>TravelGuide</h3>
+                            <h3>Lanka Voyager</h3>
                         </div>
                         <p className="brand-desc">
                             Explore the world with us. Discover new places and create unforgettable memories with our curated travel experiences.

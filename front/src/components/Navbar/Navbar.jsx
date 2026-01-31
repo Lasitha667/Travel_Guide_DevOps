@@ -28,7 +28,7 @@ const Navbar = () => {
             <div className="navbar-container container">
                 <Link to="/" className="navbar-logo" onClick={closeMobileMenu}>
                     <FaPlane className="navbar-icon" />
-                    TravelGuide
+                    Lanka Voyager
                 </Link>
                 <div className="menu-icon" onClick={handleClick}>
                     {click ? <FaTimes /> : <FaBars />}
