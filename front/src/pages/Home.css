@@ -1,0 +1,123 @@
+.hero-section {
+    height: 100vh;
+    width: 100%;
+    background-image: url('https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+    background-position: center;
+    background-size: cover;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    color: var(--white);
+}
+
+.hero-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+}
+
+.hero-content {
+    position: relative;
+    z-index: 1;
+    max-width: 800px;
+}
+
+.hero-content h1 {
+    font-family: var(--font-heading);
+    font-size: 4rem;
+    margin-bottom: var(--space-md);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.hero-content p {
+    font-size: 1.5rem;
+    margin-bottom: var(--space-lg);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.search-box {
+    background: var(--white);
+    padding: var(--space-xs);
+    border-radius: 50px;
+    display: flex;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    box-shadow: var(--shadow-lg);
+}
+
+.search-box input {
+    flex: 1;
+    border: none;
+    padding: 1rem 1.5rem;
+    font-size: 1rem;
+    outline: none;
+    border-radius: 50px;
+}
+
+.search-box button {
+    border-radius: 50px;
+    padding: 0 2rem;
+}
+
+/* Destinations */
+.destinations-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--space-md);
+}
+
+.destination-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    transition: var(--transition);
+    cursor: pointer;
+}
+
+.destination-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+}
+
+.card-img {
+    height: 200px;
+    background-size: cover;
+    background-position: center;
+}
+
+.card-content {
+    padding: var(--space-md);
+}
+
+.card-content h3 {
+    color: var(--primary-dark);
+    margin-bottom: var(--space-xs);
+}
+
+/* Features */
+.features-section {
+    background-color: var(--white);
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--space-md);
+    text-align: center;
+}
+
+.feature-item {
+    padding: var(--space-md);
+}
+
+.feature-item h3 {
+    margin-bottom: var(--space-sm);
+    color: var(--primary);
+}

@@ -1,0 +1,122 @@
+/* Design System & Variables */
+:root {
+  /* Colors */
+  --primary: #0077b6; /* Ocean Blue */
+  --primary-dark: #023e8a;
+  --secondary: #0096c7;
+  --accent: #caf0f8;
+  --text: #1d3557;
+  --text-light: #457b9d;
+  --white: #ffffff;
+  --bg-light: #f1faee;
+  --bg-dark: #1d3557;
+  --error: #e63946;
+
+  /* Spacing */
+  --space-xs: 0.5rem;
+  --space-sm: 1rem;
+  --space-md: 2rem;
+  --space-lg: 4rem;
+  --space-xl: 8rem;
+
+  /* Typography */
+  --font-main: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-heading: 'Poppins', sans-serif;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  
+  /* Transitions */
+  --transition: all 0.3s ease;
+  --radius: 12px;
+}
+
+/* Reset & Base Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-main);
+  background-color: var(--bg-light);
+  color: var(--text);
+  line-height: 1.6;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+ul {
+  list-style: none;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+  transition: var(--transition);
+}
+
+/* Utilities */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--space-sm);
+}
+
+.btn {
+  display: inline-block;
+  padding: 0.8rem 1.5rem;
+  border-radius: var(--radius);
+  font-weight: 600;
+  text-align: center;
+}
+
+.btn-primary {
+  background-color: var(--primary);
+  color: var(--white);
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-dark);
+  transform: translateY(-2px);
+}
+
+.btn-outline {
+  background-color: transparent;
+  border: 2px solid var(--white);
+  color: var(--white);
+}
+
+.btn-outline:hover {
+  background-color: var(--white);
+  color: var(--primary);
+}
+
+.section {
+  padding: var(--space-lg) 0;
+}
+
+.section-title {
+  text-align: center;
+  font-family: var(--font-heading);
+  font-size: 2.5rem;
+  margin-bottom: var(--space-md);
+  color: var(--primary-dark);
+}
+
+/* Glassmorphism Card */
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  border-radius: var(--radius);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: var(--space-md);
+  box-shadow: var(--shadow-lg);
+}
