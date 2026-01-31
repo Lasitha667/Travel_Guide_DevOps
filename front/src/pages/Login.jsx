@@ -16,7 +16,9 @@ const Login = () => {
         setLoading(true);
 
         try {
-            const response = await fetch('http://localhost:8080/api/user/login', {
+            // Dynamically determine API URL based on current hostname
+            const API_BASE_URL = `http://${window.location.hostname}:8080`;
+            const response = await fetch(`${API_BASE_URL}/api/user/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
