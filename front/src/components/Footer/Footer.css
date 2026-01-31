@@ -1,22 +1,23 @@
 .footer {
-    background-color: var(--bg-dark);
-    color: var(--white);
-    padding-top: var(--space-lg);
+    background-color: var(--primary);
+    color: var(--text-white);
+    padding-top: var(--space-xl);
     padding-bottom: var(--space-md);
+    border-top: 4px solid var(--accent);
 }
 
 .footer-content {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: var(--space-md);
-    margin-bottom: var(--space-md);
+    margin-bottom: var(--space-lg);
 }
 
 .footer-brand h3 {
     font-family: var(--font-heading);
-    font-size: 1.5rem;
+    font-size: 2rem;
     margin-bottom: var(--space-sm);
-    color: var(--accent);
+    color: var(--text-white);
 }
 
 .footer-links h4,

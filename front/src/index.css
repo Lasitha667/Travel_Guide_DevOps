@@ -1,36 +1,46 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@400;600;700&display=swap');
+
 /* Design System & Variables */
 :root {
-  /* Colors */
-  --primary: #0077b6; /* Ocean Blue */
-  --primary-dark: #023e8a;
-  --secondary: #0096c7;
-  --accent: #caf0f8;
-  --text: #1d3557;
-  --text-light: #457b9d;
-  --white: #ffffff;
-  --bg-light: #f1faee;
-  --bg-dark: #1d3557;
-  --error: #e63946;
+  /* Colors - Premium Palette */
+  --primary: #0f172a;
+  /* Deep Navy */
+  --primary-light: #334155;
+  --accent: #d4af37;
+  /* Metallic Gold */
+  --accent-hover: #b5952f;
+
+  --text-main: #1e293b;
+  --text-light: #64748b;
+  --text-white: #ffffff;
+
+  --bg-body: #f8fafc;
+  /* Very light cool gray */
+  --bg-white: #ffffff;
+  --bg-overlay: rgba(15, 23, 42, 0.6);
 
   /* Spacing */
   --space-xs: 0.5rem;
-  --space-sm: 1rem;
-  --space-md: 2rem;
-  --space-lg: 4rem;
-  --space-xl: 8rem;
+  --space-sm: 1.5rem;
+  /* Increased for breathing room */
+  --space-md: 3rem;
+  --space-lg: 6rem;
+  --space-xl: 10rem;
 
   /* Typography */
-  --font-main: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-heading: 'Poppins', sans-serif;
-  
-  /* Shadows */
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-  --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  
-  /* Transitions */
-  --transition: all 0.3s ease;
-  --radius: 12px;
+  --font-main: 'Inter', sans-serif;
+  --font-heading: 'Playfair Display', serif;
+
+  /* Shadows - Soft & Professional */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+  --shadow-hover: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+
+  /* UI Elements */
+  --radius: 4px;
+  /* Sharper, more corporate look */
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Reset & Base Styles */
@@ -42,9 +52,10 @@
 
 body {
   font-family: var(--font-main);
-  background-color: var(--bg-light);
-  color: var(--text);
-  line-height: 1.6;
+  background-color: var(--bg-body);
+  color: var(--text-main);
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
 }
 
 a {
@@ -65,37 +76,44 @@ button {
 
 /* Utilities */
 .container {
-  max-width: 1200px;
+  max-width: 1280px;
   margin: 0 auto;
   padding: 0 var(--space-sm);
 }
 
 .btn {
-  display: inline-block;
-  padding: 0.8rem 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.8rem 2rem;
   border-radius: var(--radius);
-  font-weight: 600;
-  text-align: center;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  transition: var(--transition);
+  cursor: pointer;
 }
 
 .btn-primary {
   background-color: var(--primary);
-  color: var(--white);
+  color: var(--text-white);
 }
 
 .btn-primary:hover {
-  background-color: var(--primary-dark);
+  background-color: var(--primary-light);
   transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .btn-outline {
   background-color: transparent;
-  border: 2px solid var(--white);
-  color: var(--white);
+  border: 1px solid var(--text-white);
+  color: var(--text-white);
 }
 
 .btn-outline:hover {
-  background-color: var(--white);
+  background-color: var(--text-white);
   color: var(--primary);
 }
 
@@ -106,17 +124,27 @@ button {
 .section-title {
   text-align: center;
   font-family: var(--font-heading);
-  font-size: 2.5rem;
-  margin-bottom: var(--space-md);
-  color: var(--primary-dark);
+  font-weight: 700;
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  color: var(--primary);
+  letter-spacing: -0.02em;
 }
 
-/* Glassmorphism Card */
+.section-subtitle {
+  text-align: center;
+  color: var(--text-light);
+  max-width: 600px;
+  margin: 0 auto var(--space-lg);
+  font-size: 1.1rem;
+}
+
+/* Glassmorphism Card - Refined */
 .glass-card {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(10px);
-  border-radius: var(--radius);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   padding: var(--space-md);
   box-shadow: var(--shadow-lg);
 }
