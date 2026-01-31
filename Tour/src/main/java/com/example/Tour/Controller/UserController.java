@@ -20,19 +20,29 @@ public class UserController {
 
     // 🔹 Signup
     @PostMapping("/signup")
-    public ResponseEntity<usermodel> signup(@RequestBody usermodel user) {
-        usermodel savedUser = userService.registerUser(user);
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedUser);
+    public ResponseEntity<?> signup(@RequestBody usermodel user) {
+        try {
+            usermodel savedUser = userService.registerUser(user);
+            return ResponseEntity.status(HttpStatus.CREATED).body(savedUser);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error registering user: " + e.getMessage());
+        }
     }
 
     // 🔹 Login
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody usermodel user) {
-        boolean success = userService.loginUser(user.getEmail(), user.getPassword());
-        if (success) {
-            return ResponseEntity.ok("Login successful");
-        } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+    public ResponseEntity<?> login(@RequestBody usermodel user) {
+        try {
+            boolean success = userService.loginUser(user.getEmail(), user.getPassword());
+            if (success) {
+                return ResponseEntity.ok("Login successful");
+            } else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Login error: " + e.getMessage());
         }
     }
 
