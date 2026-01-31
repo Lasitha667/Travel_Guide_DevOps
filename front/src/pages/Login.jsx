@@ -1,16 +1,44 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar/Navbar';
 import './Auth.css';
 
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log('Login:', { email, password });
-        // Add auth logic here
+        setError('');
+        setLoading(true);
+
+        try {
+            const response = await fetch('http://localhost:8080/api/user/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, password }),
+            });
+
+            if (response.ok) {
+                // Success
+                console.log('Login successful');
+                // Ideally save token here if one was returned, but backend just returns string
+                navigate('/');
+            } else {
+                const errorText = await response.text();
+                setError(errorText || 'Invalid email or password');
+            }
+        } catch (err) {
+            console.error('Login error:', err);
+            setError('Something went wrong. Please try again.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -22,6 +50,8 @@ const Login = () => {
                     <div className="glass-card auth-card">
                         <h2>Welcome Back</h2>
                         <p className="auth-subtitle">Login to continue your journey</p>
+
+                        {error && <div className="error-message" style={{ color: 'red', marginBottom: '1rem' }}>{error}</div>}
 
                         <form onSubmit={handleSubmit}>
                             <div className="form-group">
@@ -44,7 +74,9 @@ const Login = () => {
                                     required
                                 />
                             </div>
-                            <button type="submit" className="btn btn-primary btn-block">Login</button>
+                            <button type="submit" className="btn btn-primary btn-block" disabled={loading}>
+                                {loading ? 'Logging in...' : 'Login'}
+                            </button>
                         </form>
 
                         <div className="auth-footer">

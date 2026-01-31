@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar/Navbar';
 import './Auth.css';
 
@@ -8,17 +8,43 @@ const Signup = () => {
         username: '',
         email: '',
         password: '',
-        confirmPassword: ''
     });
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log('Signup:', formData);
-        // Add signup logic here
+        setError('');
+        setLoading(true);
+
+        try {
+            const response = await fetch('http://localhost:8080/api/user/signup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData),
+            });
+
+            if (response.ok) {
+                console.log('Signup successful');
+                navigate('/login');
+            } else {
+                // Backend usually returns json error or status
+                const errorData = await response.json().catch(() => ({}));
+                setError(errorData.message || 'Signup failed. Email might be taken.');
+            }
+        } catch (err) {
+            console.error('Signup error:', err);
+            setError('Connection refused. Is backend running?');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -30,6 +56,8 @@ const Signup = () => {
                     <div className="glass-card auth-card">
                         <h2>Start Your Journey</h2>
                         <p className="auth-subtitle">Create an account to explore the world</p>
+
+                        {error && <div className="error-message" style={{ color: 'red', marginBottom: '1rem' }}>{error}</div>}
 
                         <form onSubmit={handleSubmit}>
                             <div className="form-group">
@@ -65,7 +93,9 @@ const Signup = () => {
                                     required
                                 />
                             </div>
-                            <button type="submit" className="btn btn-primary btn-block">Sign Up</button>
+                            <button type="submit" className="btn btn-primary btn-block" disabled={loading}>
+                                {loading ? 'Creating Account...' : 'Sign Up'}
+                            </button>
                         </form>
 
                         <div className="auth-footer">
