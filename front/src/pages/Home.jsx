@@ -8,7 +8,7 @@ const Home = () => {
         <>
             <Navbar />
             <div className="home-container">
-                {/* Hero Section */}
+                {/* Hero  */}
                 <section className="hero-section">
                     <div className="hero-overlay"></div>
                     <div className="hero-content container">
