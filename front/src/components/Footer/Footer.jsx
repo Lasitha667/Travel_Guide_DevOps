@@ -22,7 +22,7 @@ const Footer = () => {
                             <a href="#" aria-label="LinkedIn"><FaLinkedin /></a>
                         </div>
                     </div>
-
+                    
                     {/* Column 2: Quick Links */}
                     <div className="footer-section links-section">
                         <h4>Quick Links</h4>
@@ -48,6 +48,7 @@ const Footer = () => {
                     {/* Column 4: Newsletter */}
                     <div className="footer-section newsletter-section">
                         <h4>Newsletter</h4>
+                        
                         <p>Subscribe to get special offers, free giveaways, and once-in-a-lifetime deals.</p>
                         <form className="newsletter-form" onSubmit={(e) => e.preventDefault()}>
                             <div className="input-group">
@@ -57,7 +58,7 @@ const Footer = () => {
                         </form>
                     </div>
                 </div>
-
+                
                 <div className="footer-bottom">
                     <p>&copy; {new Date().getFullYear()} TravelGuide. All rights reserved.</p>
                 </div>

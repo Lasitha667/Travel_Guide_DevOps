@@ -13,14 +13,14 @@ const Home = () => {
                     <div className="hero-overlay"></div>
                     <div className="hero-content container">
                         <h1>Explore the World With Us</h1>
-                        <p>Discover new places and create unforgettable memories. Your adventure starts here.</p>
+                        <p>Lasitha and create unforgettable memories. Your adventure starts here.</p>
                         <div className="search-box">
                             <input type="text" placeholder="Where do you want to go?" />
                             <button className="btn btn-primary">Search</button>
                         </div>
                     </div>
                 </section>
-
+                
                 {/* Featured Destinations */}
                 <section className="section destinations-section" id="destinations">
                     <div className="container">
