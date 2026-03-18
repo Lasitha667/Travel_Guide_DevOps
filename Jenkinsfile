@@ -9,6 +9,7 @@ pipeline {
     environment {
         DOCKERHUB_CREDS = credentials('dockerhub')
         AWS_CREDS       = credentials('AWSLasitha667')
+        MONGODB_URI     = credentials('mongodb-uri')
 
         DOCKERHUB_USERNAME = 'lasitha667'
         AWS_ACCESS_KEY_ID     = "${AWS_CREDS_USR}"
@@ -136,7 +137,7 @@ pipeline {
 
                         # --- 5. START BACKEND ---
                         sudo docker run -d --restart unless-stopped --name tour-backend -p 8000:8000 \
-                          -e SPRING_DATA_MONGODB_URI="mongodb+srv://englasithacoc:72VWjVFPSBf3YeKG@lasitha.fbzokq9.mongodb.net/Users?retryWrites=true&w=majority" \
+                          -e SPRING_DATA_MONGODB_URI="${MONGODB_URI}" \
                           ${DOCKERHUB_USERNAME}/travel_guide_devops-backend:latest
 
                         # --- 6. START FRONTEND ---

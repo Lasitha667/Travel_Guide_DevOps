@@ -12,4 +12,4 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - SPRING_DATA_MONGODB_URI=mongodb+srv://englasithacoc:72VWjVFPSBf3YeKG@lasitha.fbzokq9.mongodb.net/Users?retryWrites=true&w=majority
+      - SPRING_DATA_MONGODB_URI=${SPRING_DATA_MONGODB_URI}
